@@ -14,11 +14,16 @@ function Login() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post("https://buzz-filling-dashboard.vercel.app/api/auth/admin/login", {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        "https://buzz-filling-dashboard.vercel.app/api/auth/admin/login", 
+        {
+          email,
+          password,
+        }
+      );
       console.log("Login successful:", response.data);
+      
+      // Store the authentication token in localStorage
       localStorage.setItem("authToken", response.data.token);
 
       // Navigate to the dashboard page after successful login

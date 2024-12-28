@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom"; // Import Link from react-router-dom
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +12,9 @@ const Signup = () => {
   });
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState("");
+
+  // Initialize useNavigate hook
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,6 +34,9 @@ const Signup = () => {
       console.log("Response received:", response.data);
       setMessage(response.data.message);
       setStatus("success");
+
+      // Redirect to login page after successful signup
+      navigate("/login");
     } catch (error) {
       console.error("Error during signup:", error);
       setMessage(
@@ -37,7 +45,6 @@ const Signup = () => {
       setStatus("error");
     }
   };
-  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -93,6 +100,15 @@ const Signup = () => {
           >
             Signup
           </button>
+        </div>
+
+        <div className="mt-4 text-center">
+          <p className="text-sm">
+            Already have an account?{" "}
+            <Link to="/login" className="text-blue-500 hover:underline">
+              Login
+            </Link>
+          </p>
         </div>
       </div>
     </div>
