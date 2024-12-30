@@ -20,16 +20,14 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import theme from '../../theme';
 
-const useAuthRedirect = () => {
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    const authToken = localStorage.getItem("authToken");
-    if (authToken) {
-      navigate("/dashboard");
-    }
-  }, [navigate]);
-};
+useEffect(() => {
+  const authToken = localStorage.getItem("authToken");
+  if (authToken) {
+    navigate("/dashboard");
+  }
+}, [navigate]);
+
 
 const Signup = () => {
   const { control, handleSubmit, formState: { errors } } = useForm();

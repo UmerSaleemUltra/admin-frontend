@@ -17,6 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Add, Search } from "@mui/icons-material";
+import { toast } from "react-toastify";  // Import toast for notifications
 
 const fetchUsers = async () => {
   const response = await fetch(
@@ -45,6 +46,7 @@ const ContactTable = () => {
   });
 
   useEffect(() => {
+    // Function to load users
     const loadUsers = async () => {
       try {
         const fetchedUsers = await fetchUsers();
@@ -55,7 +57,16 @@ const ContactTable = () => {
         setIsLoading(false);
       }
     };
-    loadUsers();
+
+    loadUsers(); // Initial data load
+
+    // Periodically fetch users every 30 seconds for real-time updates
+    const intervalId = setInterval(() => {
+      loadUsers();
+    }, 30000); // Fetch users every 30 seconds
+
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
   }, []);
 
   const filteredUsers = users.filter((user) =>
@@ -97,11 +108,12 @@ const ContactTable = () => {
         email: "",
         password: "",
       });
+
+      toast.success("User added successfully!");  // Show success toast
     } catch (error) {
-      alert("Failed to add contact. Please try again.");
+      toast.error("Failed to add contact. Please try again.");  // Show error toast
     }
   };
-
 
   if (isLoading) {
     return (
@@ -173,9 +185,6 @@ const ContactTable = () => {
                 <TableCell>{user.firstName}</TableCell>
                 <TableCell>{user.lastName}</TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>
-              
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
