@@ -1,204 +1,220 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { 
-  Box, 
-  Typography, 
-  CircularProgress, 
-  Alert, 
-  TextField, 
-  InputAdornment,
+import React, { useState, useEffect } from "react";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Paper,
-  Chip,
-  IconButton,
-  Tooltip,
-  useTheme,
-  useMediaQuery
-} from '@mui/material';
-import { 
-  DataGrid, 
-  GridToolbar,
-  gridPageCountSelector,
-  gridPageSelector,
-  useGridApiContext,
-  useGridSelector
-} from '@mui/x-data-grid';
-import { 
-  Search as SearchIcon,
-  Refresh as RefreshIcon
-} from '@mui/icons-material';
-import UserProfileModal from './UserProfileModal';
-import CustomPagination from './CustomPagination';
+  CircularProgress,
+  Typography,
+} from "@mui/material";
+import { Add, Search } from "@mui/icons-material";
 
-export default function ContactTable() {
+const fetchUsers = async () => {
+  const response = await fetch(
+    "https://buzz-filling-dashboard.vercel.app/api/auth/user/users"
+  );
+  if (!response.ok) {
+    throw new Error("Failed to fetch users");
+  }
+  const data = await response.json();
+  return data.users || [];
+};
+
+const ContactTable = () => {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    const authToken = localStorage.getItem('authToken');
-    if (!authToken) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      const response = await axios.get('https://buzz-filling-dashboard.vercel.app/api/auth/user/users', {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-      if (response.data && Array.isArray(response.data.users)) {
-        setUsers(response.data.users);
-      } else {
-        throw new Error('Unexpected data format');
-      }
-    } catch (err) {
-      console.error(err);
-      setError('Failed to fetch users. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newUser, setNewUser] = useState({
+    businessName: "",
+    state: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+  });
 
   useEffect(() => {
-    fetchUsers();
-  }, [navigate]);
-
-  const columns = [
-    { 
-      field: 'businessName', 
-      headerName: 'Business Name', 
-      flex: 1, 
-      minWidth: 150,
-      renderCell: (params) => (
-        <Tooltip title={params.value}>
-          <span>{params.value}</span>
-        </Tooltip>
-      ),
-    },
-    { 
-      field: 'state', 
-      headerName: 'State', 
-      flex: 1, 
-      minWidth: 100,
-      renderCell: (params) => (
-        <Chip label={params.value} size="small" />
-      ),
-    },
-    { field: 'firstName', headerName: 'First Name', flex: 1, minWidth: 120 },
-    { field: 'lastName', headerName: 'Last Name', flex: 1, minWidth: 120 },
-    { 
-      field: 'email', 
-      headerName: 'Email', 
-      flex: 1, 
-      minWidth: 200,
-      renderCell: (params) => (
-        <Tooltip title={params.value}>
-          <span>{params.value}</span>
-        </Tooltip>
-      ),
-    },
-  ];
+    const loadUsers = async () => {
+      try {
+        const fetchedUsers = await fetchUsers();
+        setUsers(fetchedUsers);
+      } catch (err) {
+        setError("Failed to load users. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadUsers();
+  }, []);
 
   const filteredUsers = users.filter((user) =>
     Object.values(user).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
-  if (loading) {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewUser((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddUser = async () => {
+    try {
+      const response = await fetch(
+        "https://buzz-filling-dashboard.vercel.app/api/auth/user/signup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newUser),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to add user");
+      }
+
+      const addedUser = await response.json();
+      setUsers((prev) => [...prev, addedUser]);
+      setIsDialogOpen(false);
+      setNewUser({
+        businessName: "",
+        state: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+      });
+    } catch (error) {
+      alert("Failed to add contact. Please try again.");
+    }
+  };
+
+
+  if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+      <div className="flex justify-center items-center h-screen">
         <CircularProgress />
-      </Box>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box m={2}>
-        <Alert 
-          severity="error" 
-          action={
-            <IconButton
-              color="inherit"
-              size="small"
-              onClick={fetchUsers}
-            >
-              <RefreshIcon fontSize="inherit" />
-            </IconButton>
-          }
-        >
-          {error}
-        </Alert>
-      </Box>
+      <div className="flex justify-center items-center h-screen">
+        <Typography color="error">{error}</Typography>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ height: '100vh', width: '100%', padding: 2 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Contact List
-      </Typography>
-      <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <Typography variant="h4" component="h2">
+          Contacts
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Add />}
+          onClick={() => setIsDialogOpen(true)}
+        >
+          Add Contact
+        </Button>
+      </div>
+
+      <div className="relative mb-6">
+        <Search
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "10px",
+            transform: "translateY(-50%)",
+            color: "gray",
+          }}
+        />
         <TextField
-          fullWidth
-          variant="outlined"
           placeholder="Search contacts..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
+          fullWidth
+          style={{ paddingLeft: "40px" }}
         />
-      </Paper>
-      <Paper elevation={3} sx={{ height: 'calc(100% - 180px)', width: '100%' }}>
-        <DataGrid
-          rows={filteredUsers}
-          columns={columns}
-          pageSize={10}
-          rowsPerPageOptions={[5, 10, 20]}
-          checkboxSelection
-          disableSelectionOnClick
-          getRowId={(row) => row._id}
-          onRowClick={(params) => setSelectedUser(params.row)}
-          components={{
-            Toolbar: GridToolbar,
-            Pagination: CustomPagination,
-          }}
-          componentsProps={{
-            toolbar: {
-              showQuickFilter: true,
-              quickFilterProps: { debounceMs: 500 },
-            },
-          }}
-          sx={{
-            '& .MuiDataGrid-cell:hover': {
-              color: 'primary.main',
-            },
-            '& .MuiDataGrid-row:nth-of-type(even)': {
-              backgroundColor: theme.palette.action.hover,
-            },
-          }}
-        />
-      </Paper>
-      <UserProfileModal
-        user={selectedUser}
-        open={!!selectedUser}
-        onClose={() => setSelectedUser(null)}
-      />
-    </Box>
-  );
-}
+      </div>
 
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Business Name</TableCell>
+              <TableCell>State</TableCell>
+              <TableCell>First Name</TableCell>
+              <TableCell>Last Name</TableCell>
+              <TableCell>Email</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredUsers.map((user) => (
+              <TableRow key={user._id}>
+                <TableCell>{user.businessName}</TableCell>
+                <TableCell>{user.state}</TableCell>
+                <TableCell>{user.firstName}</TableCell>
+                <TableCell>{user.lastName}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
+              
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {filteredUsers.length === 0 && (
+        <Typography align="center" color="textSecondary" style={{ marginTop: "16px" }}>
+          No contacts found
+        </Typography>
+      )}
+
+      <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
+        <DialogTitle>Add New Contact</DialogTitle>
+        <DialogContent>
+          {["businessName", "state", "firstName", "lastName", "email", "password"].map((field) => (
+            <TextField
+              key={field}
+              label={field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
+              name={field}
+              value={newUser[field]}
+              onChange={handleInputChange}
+              type={field === "password" ? "password" : "text"}
+              fullWidth
+              margin="dense"
+            />
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsDialogOpen(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleAddUser} variant="contained" color="primary">
+            Add Contact
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
+  );
+};
+
+export default ContactTable;

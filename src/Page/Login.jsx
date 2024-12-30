@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import {
@@ -17,7 +17,19 @@ import "react-toastify/dist/ReactToastify.css";
 import theme from "../../theme"; // Import your existing theme
 import { ThemeProvider } from "@emotion/react";
 
+const useAuthRedirect = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const authToken = localStorage.getItem("authToken");
+    if (authToken) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+};
+
 const Login = () => {
+  useAuthRedirect(); // Redirect if token exists
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,17 +45,13 @@ const Login = () => {
         { email, password }
       );
 
-      // Show success toast
       toast.success("Login successful!", { position: "top-center" });
-
-      // Store token and navigate
       localStorage.setItem("authToken", response.data.token);
       navigate("/dashboard");
     } catch (error) {
-      // Show error toast
-      toast.error("Invalid email or password. Please try again.", {
-        position: "bottom-left",
-      });
+      const errorMessage =
+        error.response?.data?.message || "An unexpected error occurred.";
+      toast.error(errorMessage, { position: "bottom-left" });
     } finally {
       setLoading(false);
     }
@@ -80,7 +88,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               variant="outlined"
               required
-              InputProps={{ sx: { color: "error.main" } }}
+              sx={{ input: { color: "error.main" } }}
             />
             <TextField
               label="Password"
@@ -91,7 +99,7 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               variant="outlined"
               required
-              InputProps={{ sx: { color: "error.main" } }}
+              sx={{ input: { color: "error.main" } }}
             />
             <Button
               type="submit"

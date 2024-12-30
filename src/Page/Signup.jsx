@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
@@ -20,6 +20,17 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import theme from '../../theme';
 
+const useAuthRedirect = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const authToken = localStorage.getItem("authToken");
+    if (authToken) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+};
+
 const Signup = () => {
   const { control, handleSubmit, formState: { errors } } = useForm();
   const [loading, setLoading] = useState(false);
@@ -34,7 +45,7 @@ const Signup = () => {
       );
 
       // Show success toast
-      toast.success(response.data.message || 'Signup successful!', { position: 'top-center' });
+      toast.success(response.data.message || 'Signup successful!', { position: 'bottom-center' });
 
       navigate('/login');
     } catch (error) {
