@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import { Add, Search } from "@mui/icons-material";
 import { toast } from "react-toastify";  // Import toast for notifications
+import { useNavigate } from "react-router-dom";
 
 const fetchUsers = async () => {
   const response = await fetch(
@@ -36,6 +37,7 @@ const ContactTable = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const navigate = useNavigate();
   const [newUser, setNewUser] = useState({
     businessName: "",
     state: "",
