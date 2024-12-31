@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-d
 import Signup from "./Page/Signup";
 import Login from "./Page/Login";
 import ContactTable from "./Page/dashboard";
+import ClientsTable from "./Page/Clientstable";
+import AddClient from "./Page/Addclient";
+
 
 function App() {
   // ProtectedRoute component defined inside App.jsx
@@ -24,7 +27,10 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Signup />} />
+          <Route path="/add-client" element={<AddClient />} />
           <Route path="/Login" element={<Login />} />
+          <Route path="/Clients" element={<ClientsTable />} />
+
 
           {/* Protected Route */}
           <Route
