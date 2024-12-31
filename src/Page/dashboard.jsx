@@ -1,19 +1,279 @@
-import React from "react";
-import Sidebar from "../Components/Sidebar";
-import ClientsTable from "./Clientstable"; // Make sure the ClientsTable component is correctly imported
+import React, { useState, useEffect } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  TextField,
+  Typography,
+  Button,
+  CircularProgress,
+  Grid,
+  Box,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from "@mui/material";
+import { Search, Add, Delete, Edit } from "@mui/icons-material";
+import { toast } from "react-toastify";
 
-const Dashboard = () => {
+const fetchUsers = async () => {
+  const response = await fetch(
+    "https://buzz-filling-dashboard.vercel.app/api/auth/user/users"
+  );
+  if (!response.ok) {
+    throw new Error("Failed to fetch users");
+  }
+  const data = await response.json();
+  return data.users || [];
+};
+
+const ClientsTable = () => {
+  const [users, setUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [newUser, setNewUser] = useState({
+    businessName: "",
+    state: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+  });
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const fetchedUsers = await fetchUsers();
+        setUsers(fetchedUsers);
+      } catch (err) {
+        setError("Failed to load users. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUsers();
+    const intervalId = setInterval(() => {
+      loadUsers();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const filteredUsers = users.filter((user) =>
+    Object.values(user).some((value) =>
+      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewUser((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddUser = async () => {
+    try {
+      const response = await fetch(
+        "https://buzz-filling-dashboard.vercel.app/api/auth/user/signup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newUser),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to add user");
+      }
+
+      toast.success("User added successfully!");
+      setOpenDialog(false);
+      setNewUser({
+        businessName: "",
+        state: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+      });
+      const fetchedUsers = await fetchUsers();
+      setUsers(fetchedUsers);
+    } catch (error) {
+      toast.error("Failed to add client. Please try again.");
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      const response = await fetch(
+        `https://buzz-filling-dashboard.vercel.app/api/auth/user/delete`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: userToDelete }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete user");
+      }
+
+      toast.success("User deleted successfully!");
+      setOpenDeleteDialog(false);
+      setUserToDelete(null);
+      const fetchedUsers = await fetchUsers();
+      setUsers(fetchedUsers);
+    } catch (error) {
+      toast.error("Failed to delete user. Please try again.");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
-      {/* Sidebar Component */}
-      <Sidebar />
+    <Box>
+      <Grid container justifyContent="space-between" alignItems="center" mb={4}>
+        <Typography variant="h4">Clients</Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Add />}
+          onClick={() => setOpenDialog(true)}
+        >
+          Add Client
+        </Button>
+      </Grid>
 
-      {/* Main Content (Clients Table) */}
-      <main style={{ flexGrow: 1, padding: "20px" }}>
-        <ClientsTable /> {/* Display Clients Table here */}
-      </main>
-    </div>
+      <Box mb={4} position="relative">
+        <Search style={{ position: "absolute", left: "10px", color: "#aaa" }} />
+        <TextField
+          placeholder="Search Clients..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          fullWidth
+          variant="outlined"
+          style={{ paddingLeft: "40px" }}
+        />
+      </Box>
+
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Business Name</TableCell>
+              <TableCell>State</TableCell>
+              <TableCell>First Name</TableCell>
+              <TableCell>Last Name</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
+                <TableRow key={user._id} hover>
+                  <TableCell>{user.businessName}</TableCell>
+                  <TableCell>{user.state}</TableCell>
+                  <TableCell>{user.firstName}</TableCell>
+                  <TableCell>{user.lastName}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      startIcon={<Delete />}
+                      onClick={() => {
+                        setUserToDelete(user._id);
+                        setOpenDeleteDialog(true);
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  <Typography variant="body2" color="textSecondary">
+                    No Clients found
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Add New Client</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2}>
+            {["businessName", "state", "firstName", "lastName", "email", "password"].map((field) => (
+              <Grid item xs={12} key={field}>
+                <TextField
+                  label={field.replace(/([A-Z])/g, " $1")}
+                  name={field}
+                  value={newUser[field]}
+                  onChange={handleInputChange}
+                  type={field === "password" ? "password" : "text"}
+                  fullWidth
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleAddUser} color="primary">
+            Add
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to delete this client?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteUser} color="primary">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 
-export default Dashboard;
+export default ClientsTable;
