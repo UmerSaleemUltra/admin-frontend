@@ -26,7 +26,8 @@ useEffect(() => {
   if (authToken) {
     navigate("/dashboard");
   }
-}, [navigate]);
+}, [navigate]); // Include 'navigate' here
+
 
 
 const Signup = () => {
