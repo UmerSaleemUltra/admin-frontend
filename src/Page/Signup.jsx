@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
+import axios from "axios";
 import {
   Container,
   Box,
@@ -14,44 +14,46 @@ import {
   CircularProgress,
   ThemeProvider,
   CssBaseline,
-} from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import theme from '../../theme';
+} from "@mui/material";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import theme from "../../theme";
 
+const useAuthRedirect = () => {
+  const navigate = useNavigate();
 
-useEffect(() => {
-  const authToken = localStorage.getItem("authToken");
-  if (authToken) {
-    navigate("/dashboard");
-  }
-}, [navigate]); // Include 'navigate' here
-
-
+  useEffect(() => {
+    const authToken = localStorage.getItem("authToken");
+    if (authToken) {
+      console.log("User authenticated, redirecting to dashboard...");
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+};
 
 const Signup = () => {
+  const navigate = useNavigate(); // Initialize navigate
+  useAuthRedirect(); // Use the hook for redirection
+  
   const { control, handleSubmit, formState: { errors } } = useForm();
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const onSubmit = async (data) => {
     setLoading(true);
     try {
       const response = await axios.post(
-        'https://buzz-filling-dashboard.vercel.app/api/auth/admin/signup',
+        "https://buzz-filling-dashboard.vercel.app/api/auth/admin/signup",
         data
       );
-
-      // Show success toast
-      toast.success(response.data.message || 'Signup successful!', { position: 'bottom-center' });
-
-      navigate('/login');
+      toast.success(response.data.message || "Signup successful!", {
+        position: "bottom-center",
+      });
+      navigate("/login");
     } catch (error) {
-      // Show error toast
       toast.error(
-        error.response?.data?.message || 'Something went wrong. Please try again.',
-        { position: 'top-center' }
+        error.response?.data?.message || "Something went wrong. Please try again.",
+        { position: "top-center" }
       );
     } finally {
       setLoading(false);
@@ -61,23 +63,22 @@ const Signup = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <ToastContainer />
       <Container
         component="main"
         maxWidth="xs"
-        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+        sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
       >
         <Paper
           elevation={6}
           sx={{
             mt: 8,
             p: { xs: 2, sm: 4 },
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
+          <Avatar sx={{ m: 1, bgcolor: "primary.main" }}>
             <LockOutlinedIcon />
           </Avatar>
           <Typography component="h1" variant="h5" color="primary">
@@ -86,13 +87,13 @@ const Signup = () => {
           <Box
             component="form"
             onSubmit={handleSubmit(onSubmit)}
-            sx={{ mt: 3, width: '100%' }}
+            sx={{ mt: 3, width: "100%" }}
           >
             <Controller
               name="firstName"
               control={control}
               defaultValue=""
-              rules={{ required: 'First name is required' }}
+              rules={{ required: "First name is required" }}
               render={({ field }) => (
                 <TextField
                   {...field}
@@ -109,7 +110,7 @@ const Signup = () => {
               name="lastName"
               control={control}
               defaultValue=""
-              rules={{ required: 'Last name is required' }}
+              rules={{ required: "Last name is required" }}
               render={({ field }) => (
                 <TextField
                   {...field}
@@ -127,10 +128,10 @@ const Signup = () => {
               control={control}
               defaultValue=""
               rules={{
-                required: 'Email is required',
+                required: "Email is required",
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address',
+                  message: "Invalid email address",
                 },
               }}
               render={({ field }) => (
@@ -151,10 +152,10 @@ const Signup = () => {
               control={control}
               defaultValue=""
               rules={{
-                required: 'Password is required',
+                required: "Password is required",
                 minLength: {
                   value: 8,
-                  message: 'Password must be at least 8 characters',
+                  message: "Password must be at least 8 characters",
                 },
               }}
               render={({ field }) => (
@@ -177,15 +178,15 @@ const Signup = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} /> : 'Sign Up'}
+              {loading ? <CircularProgress size={24} /> : "Sign Up"}
             </Button>
-            <Box sx={{ textAlign: 'center' }}>
+            <Box sx={{ textAlign: "center" }}>
               <Link
                 component={RouterLink}
                 to="/login"
                 variant="body2"
                 color="primary"
-                sx={{ textDecoration: 'none' }}
+                sx={{ textDecoration: "none" }}
               >
                 Already have an account? Login
               </Link>
