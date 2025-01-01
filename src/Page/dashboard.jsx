@@ -17,8 +17,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
-import { Search, Add, Delete, Edit } from "@mui/icons-material";
+import { Search, Add, Delete } from "@mui/icons-material";
 import { toast } from "react-toastify";
 
 const fetchUsers = async () => {
@@ -49,6 +51,7 @@ const ClientsTable = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
+  // Fetch users and set up auto-refresh
   useEffect(() => {
     const loadUsers = async () => {
       try {
@@ -69,6 +72,7 @@ const ClientsTable = () => {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Filter users by search term
   const filteredUsers = users.filter((user) =>
     Object.values(user).some((value) =>
       value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
@@ -80,6 +84,7 @@ const ClientsTable = () => {
     setNewUser((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Add a new user
   const handleAddUser = async () => {
     try {
       const response = await fetch(
@@ -112,6 +117,7 @@ const ClientsTable = () => {
     }
   };
 
+  // Delete a user
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
 
@@ -156,9 +162,11 @@ const ClientsTable = () => {
   }
 
   return (
-    <Box>
-      <Grid container justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4">Clients</Typography>
+    <Box px={{ xs: 2, md: 4 }} py={3}>
+      <Grid container justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h5" sx={{ fontWeight: 600 }}>
+          Clients
+        </Typography>
         <Button
           variant="contained"
           color="primary"
@@ -169,19 +177,29 @@ const ClientsTable = () => {
         </Button>
       </Grid>
 
-      <Box mb={4} position="relative">
-        <Search style={{ position: "absolute", left: "10px", color: "#aaa" }} />
+      {/* Search Bar */}
+      <Grid container justifyContent="center" sx={{ mb: 3 }}>
         <TextField
           placeholder="Search Clients..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          fullWidth
-          variant="outlined"
-          style={{ paddingLeft: "40px" }}
+          size="small"
+          sx={{
+            width: { xs: "100%", sm: "50%", md: "30%" },
+            "& .MuiOutlinedInput-root": { borderRadius: 2 },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          }}
         />
-      </Box>
+      </Grid>
 
-      <TableContainer component={Paper}>
+      {/* Clients Table */}
+      <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -203,17 +221,15 @@ const ClientsTable = () => {
                   <TableCell>{user.lastName}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="contained"
+                    <IconButton
                       color="secondary"
-                      startIcon={<Delete />}
                       onClick={() => {
                         setUserToDelete(user._id);
                         setOpenDeleteDialog(true);
                       }}
                     >
-                      Delete
-                    </Button>
+                      <Delete />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))
@@ -230,7 +246,13 @@ const ClientsTable = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+      {/* Add Client Dialog */}
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>Add New Client</DialogTitle>
         <DialogContent>
           <Grid container spacing={2}>
@@ -258,7 +280,13 @@ const ClientsTable = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <Typography>Are you sure you want to delete this client?</Typography>
